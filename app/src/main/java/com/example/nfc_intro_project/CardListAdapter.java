@@ -116,13 +116,13 @@ public class CardListAdapter extends SelectableAdapter<CardListAdapter.ViewHolde
         listName.setText(listItem.getName().toUpperCase());
 
         TextView listeEmail= (TextView) holder.cardView.findViewById(R.id.Company_email);
-        listeEmail.setText(listItem.getEmail().toUpperCase());
+        listeEmail.setText(listItem.getEmail());
 
         TextView listNumber = (TextView) holder.cardView.findViewById(R.id.Phone_number);
-        listNumber.setText(listItem.getNumber().toUpperCase());
+        listNumber.setText(listItem.getNumber());
 
         TextView listCompanyName = (TextView) holder.cardView.findViewById(R.id.Company_name);
-        listCompanyName.setText(listItem.getCompany().toUpperCase());
+        listCompanyName.setText(listItem.getCompany());
 
         // Highlight the item if it's selected
         if(isSelected(position))
