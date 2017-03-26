@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,7 +29,7 @@ import org.json.JSONObject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-public class MainActivity extends Activity
+public class MainActivity extends AppCompatActivity
         implements NfcAdapter.OnNdefPushCompleteCallback,
         NfcAdapter.CreateNdefMessageCallback, CardListAdapter.ViewHolder.ClickListener, CardListAdapter.OnCompleteListener {
     //The array lists to hold our messages
@@ -94,6 +95,13 @@ public class MainActivity extends Activity
         return records;
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
 
     @Override
     public NdefMessage createNdefMessage(NfcEvent event) {
@@ -127,7 +135,18 @@ public class MainActivity extends Activity
                         json = new JSONObject(string.substring(3));
                         //messagesReceivedArray.add(json.getString("name"));
                         Card newData = new Card(json.getString("name"), json.getString("company"), json.getString("email"), json.getString("number"));
-                        cards.add(newData);
+                        boolean setCard = true;
+                        for (int i = 0; i < cards.size(); i++)
+                        {
+                            if (cards.get(i).getName().equals(newData.getName()))
+                            {
+                                setCard = false;
+                                break;
+                            }
+                        }
+
+                        if (setCard) { cards.add(newData); }
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -165,10 +184,10 @@ public class MainActivity extends Activity
         boolean setCard = true;
         for (int i = 0; i < cards.size(); i++)
         {
-            if (cards.get(i).getName() == card1.getName())
+            if (cards.get(i).getName().equals(card1.getName()))
             {
                 setCard = false;
-                continue;
+                break;
             }
         }
 
