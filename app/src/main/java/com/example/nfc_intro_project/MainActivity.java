@@ -13,6 +13,9 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,10 +30,15 @@ import java.util.ArrayList;
 
 public class MainActivity extends Activity
         implements NfcAdapter.OnNdefPushCompleteCallback,
-        NfcAdapter.CreateNdefMessageCallback {
+        NfcAdapter.CreateNdefMessageCallback, CardListAdapter.ViewHolder.ClickListener, CardListAdapter.OnCompleteListener {
     //The array lists to hold our messages
     private ArrayList<String> messagesToSendArray = new ArrayList<>();
     private ArrayList<String> messagesReceivedArray = new ArrayList<>();
+    private  static ArrayList<Card> cards = new ArrayList<Card>();
+
+    private RecyclerView cardListView;
+    private CardListAdapter listAdapter;
+    private RecyclerView.LayoutManager layoutManager;
 
     //Text boxes to add and display our messages
     private EditText txtBoxAddMessage;
@@ -39,19 +47,19 @@ public class MainActivity extends Activity
 
     private NfcAdapter mNfcAdapter;
 
-    public void addMessage(View view) {
-        String newMessage = txtBoxAddMessage.getText().toString();
-        messagesToSendArray.add(newMessage);
-
-        txtBoxAddMessage.setText(null);
-        updateTextViews();
-
-        Toast.makeText(this, "Added Message", Toast.LENGTH_LONG).show();
-    }
+//    public void addMessage(View view) {
+//        String newMessage = txtBoxAddMessage.getText().toString();
+//        messagesToSendArray.add(newMessage);
+//
+//        txtBoxAddMessage.setText(null);
+//        updateTextViews();
+//
+//        Toast.makeText(this, "Added Message", Toast.LENGTH_LONG).show();
+//    }
 
     @Override
     public void onNdefPushComplete(NfcEvent event) {
-        messagesToSendArray.clear();
+        //messagesToSendArray.clear();
         //This is called when the system detects that our NdefMessage was
         //Successfully sent
     }
@@ -113,22 +121,35 @@ public class MainActivity extends Activity
                     String string = new String(record.getPayload());
                     //Make sure we don't pass along our AAR (Android Applicatoin Record)
                     if (string.equals(getPackageName())) { continue; }
-                    messagesReceivedArray.add(string);
+                    JSONObject json = new JSONObject();
+                    try {
+                        System.out.println(string.substring(3));
+                        json = new JSONObject(string.substring(3));
+                        //messagesReceivedArray.add(json.getString("name"));
+                        Card newData = new Card(json.getString("name"), json.getString("company"), json.getString("email"), json.getString("number"));
+                        cards.add(newData);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+
                 }
-                Toast.makeText(this, "Received " + messagesReceivedArray.size() +
-                        " Messages", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Received " + 1 +
+                        " Business Card", Toast.LENGTH_LONG).show();
                 updateTextViews();
             }
             else {
                 Toast.makeText(this, "Received Blank Parcel", Toast.LENGTH_LONG).show();
             }
+
+
         }
     }
 
 
     @Override
     public void onNewIntent(Intent intent) {
-            handleNfcIntent(intent);
+            //handleNfcIntent(intent);
     }
 
 
@@ -136,28 +157,53 @@ public class MainActivity extends Activity
     public void onResume() {
         super.onResume();
         updateTextViews();
-        handleNfcIntent(getIntent());
+        //handleNfcIntent(getIntent());
+    }
+
+    private void setUp(){
+        Card card1 = new Card("John Doe", "MHacks", "john.doe@mhacks.com", "123-456-789");
+        boolean setCard = true;
+        for (int i = 0; i < cards.size(); i++)
+        {
+            if (cards.get(i).getName() == card1.getName())
+            {
+                setCard = false;
+                continue;
+            }
+        }
+
+        if (setCard) { cards.add(card1); }
     }
 
 
-    private  void updateTextViews() {
-        txtMessagesToSend.setText("Messages To Send:\n");
-        //Populate Our list of messages we want to send
-        if(messagesToSendArray.size() > 0) {
-            for (int i = 0; i < messagesToSendArray.size(); i++) {
-                txtMessagesToSend.append(messagesToSendArray.get(i));
-                txtMessagesToSend.append("\n");
-            }
-        }
 
-        txtReceivedMessages.setText("Messages Received:\n");
-        //Populate our list of messages we have received
-        if (messagesReceivedArray.size() > 0) {
-            for (int i = 0; i < messagesReceivedArray.size(); i++) {
-                txtReceivedMessages.append(messagesReceivedArray.get(i));
-                txtReceivedMessages.append("\n");
-            }
-        }
+    private  void updateTextViews() {
+//        txtMessagesToSend.setText("Messages To Send:\n");
+//        //Populate Our list of messages we want to send
+//        if(messagesToSendArray.size() > 0) {
+//            for (int i = 0; i < messagesToSendArray.size(); i++) {
+//                txtMessagesToSend.append(messagesToSendArray.get(i));
+//                txtMessagesToSend.append("\n");
+//            }
+//        }
+//
+//        txtReceivedMessages.setText("Messages Received:\n");
+//        //Populate our list of messages we have received
+//        if (messagesReceivedArray.size() > 0) {
+//            for (int i = 0; i < messagesReceivedArray.size(); i++) {
+//                txtReceivedMessages.append(messagesReceivedArray.get(i));
+//                txtReceivedMessages.append("\n");
+//            }
+//        }
+        cardListView = (RecyclerView) findViewById(R.id.card_list_view);
+
+        layoutManager = new LinearLayoutManager(this);
+        cardListView.setLayoutManager(layoutManager);
+
+        listAdapter = new CardListAdapter(cards, this, this);
+        cardListView.setAdapter(listAdapter);
+
+        cardListView.setItemAnimator(new DefaultItemAnimator());
     }
 
     //Save our Array Lists of Messages for if the user navigates away
@@ -181,6 +227,7 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setUp();
 
         //Check if NFC is available on device
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -202,12 +249,12 @@ public class MainActivity extends Activity
         }
 
 
-        txtBoxAddMessage = (EditText) findViewById(R.id.txtBoxAddMessage);
-        txtMessagesToSend = (TextView) findViewById(R.id.txtMessageToSend);
-        txtReceivedMessages = (TextView) findViewById(R.id.txtMessagesReceived);
-        Button btnAddMessage = (Button) findViewById(R.id.buttonAddMessage);
+//        txtBoxAddMessage = (EditText) findViewById(R.id.txtBoxAddMessage);
+//        txtMessagesToSend = (TextView) findViewById(R.id.txtMessageToSend);
+//        txtReceivedMessages = (TextView) findViewById(R.id.txtMessagesReceived);
+//        Button btnAddMessage = (Button) findViewById(R.id.buttonAddMessage);
 
-        btnAddMessage.setText("Add Message");
+//        btnAddMessage.setText("Add Message");
         updateTextViews();
 
         if (getIntent().getAction().equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
@@ -220,8 +267,8 @@ public class MainActivity extends Activity
         //get values from system, manually input them right now
         JSONObject obj = new JSONObject();
 
-        obj.put("Full name", "John Doe");
-        obj.put("Email", "john@doe.com");
+        obj.put("Full name", "Jane Doe");
+        obj.put("Email", "jane.doe@mhacks.com");
         obj.put("Phone Number", "123456789");
 
 
@@ -243,5 +290,20 @@ public class MainActivity extends Activity
         NdefMessage message = new NdefMessage(records);
 
         return message;
+    }
+
+    @Override
+    public void onItemClicked(int position) {
+
+    }
+
+    @Override
+    public boolean onItemLongClicked(int position) {
+        return false;
+    }
+
+    @Override
+    public void onComplete(int dataSetSize) {
+
     }
 }
