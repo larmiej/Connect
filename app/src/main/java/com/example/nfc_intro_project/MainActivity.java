@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setUp(){
-        Card card1 = new Card("John Doe", "MHacks", "john.doe@mhacks.com", "123-456-789");
+        Card card1 = new Card("John Doe", "Organiser @ MHacks", "john.doe@mhacks.com", "123-456-789");
         boolean setCard = true;
         for (int i = 0; i < cards.size(); i++)
         {
